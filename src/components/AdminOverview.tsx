@@ -13,8 +13,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  Sparkles,
-  Download
+  Sparkles
 } from 'lucide-react';
 import { ShortFilm, Creator, Review } from '../types';
 
@@ -39,103 +38,74 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
   const statCards = [
     {
       label: 'Total Users',
-      value: '2',
+      value: '1',
       icon: Users,
       colorClass: 'text-blue-400',
       bgClass: 'bg-blue-500/10 border-blue-500/30'
     },
-    {
-      label: 'Total Short Films',
-      value: '20',
-      icon: Film,
-      colorClass: 'text-cinema-gold',
-      bgClass: 'bg-cinema-gold/10 border-cinema-gold/30'
-    },
-    {
-      label: 'Published Films',
-      value: '20',
-      icon: Film,
-      colorClass: 'text-emerald-400',
-      bgClass: 'bg-emerald-500/10 border-emerald-500/30'
-    },
-    {
-      label: 'Pending Submissions',
-      value: '0',
-      icon: FileCheck,
-      colorClass: 'text-cinema-accent',
-      bgClass: 'bg-cinema-accent/10 border-cinema-accent/30',
-      onClick: () => onNavigateTab('submissions')
-    },
-    {
-      label: 'Total Video Views',
-      value: '45,890',
-      icon: Eye,
-      colorClass: 'text-cinema-teal',
-      bgClass: 'bg-cinema-teal/10 border-cinema-teal/30'
-    },
-    {
-      label: 'Total Reviews',
-      value: '1',
-      icon: MessageSquare,
-      colorClass: 'text-purple-400',
-      bgClass: 'bg-purple-500/10 border-purple-500/30'
-    },
-    {
-      label: 'Filmmakers',
-      value: '18',
-      icon: Award,
-      colorClass: 'text-amber-400',
-      bgClass: 'bg-amber-500/10 border-amber-500/30',
-      onClick: () => onNavigateTab('filmmakers')
-    },
+      {
+        label: 'Total Short Films',
+        value: films.length.toString(),
+        icon: Film,
+        colorClass: 'text-cinema-gold',
+        bgClass: 'bg-cinema-gold/10 border-cinema-gold/30'
+      },
+      {
+        label: 'Published Films',
+        value: films.filter(f => f.status === 'published').length.toString(),
+        icon: Film,
+        colorClass: 'text-emerald-400',
+        bgClass: 'bg-emerald-500/10 border-emerald-500/30'
+      },
+      {
+        label: 'Pending Submissions',
+        value: films.filter(f => f.status === 'pending' || f.status === 'under_review').length.toString(),
+        icon: FileCheck,
+        colorClass: 'text-cinema-accent',
+        bgClass: 'bg-cinema-accent/10 border-cinema-accent/30',
+        onClick: () => onNavigateTab('submissions')
+      },
+      {
+        label: 'Total Video Views',
+        value: films.reduce((sum, f) => sum + (f.viewsCount || 0), 0).toLocaleString(),
+        icon: Eye,
+        colorClass: 'text-cinema-teal',
+        bgClass: 'bg-cinema-teal/10 border-cinema-teal/30'
+      },
+      {
+        label: 'Total Reviews',
+        value: reviews.length.toString(),
+        icon: MessageSquare,
+        colorClass: 'text-purple-400',
+        bgClass: 'bg-purple-500/10 border-purple-500/30'
+      },
+      {
+        label: 'Filmmakers',
+        value: creators.length.toString(),
+        icon: Award,
+        colorClass: 'text-amber-400',
+        bgClass: 'bg-amber-500/10 border-amber-500/30',
+        onClick: () => onNavigateTab('filmmakers')
+      },
     {
       label: 'Pending Reports',
       value: '0',
       icon: ShieldAlert,
       colorClass: 'text-rose-400',
       bgClass: 'bg-rose-500/10 border-rose-500/30',
-      onClick: () => onNavigateTab('reports')
+      onClick: () => onNavigateTab('moderation')
     }
   ];
 
   const languagesShare = [
-    { name: 'Hindi (हिन्दी)', percentage: 42, barColor: 'bg-cinema-accent' },
-    { name: 'Tamil (தமிழ்)', percentage: 24, barColor: 'bg-cinema-teal' },
-    { name: 'Gujarati (ગુજરાતી)', percentage: 16, barColor: 'bg-cinema-gold' },
-    { name: 'Telugu (తెలుగు)', percentage: 12, barColor: 'bg-purple-500' },
-    { name: 'Kannada (ಕನ್ನಡ)', percentage: 6, barColor: 'bg-blue-500' }
+    { name: 'Kannada (ಕನ್ನಡ)', percentage: 0, barColor: 'bg-blue-500' },
+    { name: 'Hindi (हिन्दी)', percentage: 0, barColor: 'bg-cinema-accent' },
+    { name: 'Tamil (தமிழ்)', percentage: 0, barColor: 'bg-cinema-teal' },
+    { name: 'Gujarati (ગુજરાતી)', percentage: 0, barColor: 'bg-cinema-gold' },
+    { name: 'Telugu (తెలుగు)', percentage: 0, barColor: 'bg-purple-500' }
   ];
 
-  const auditLogs = [
-    {
-      action: 'Approved submission',
-      target: '"Chai & Stories"',
-      time: '10m ago',
-      color: 'text-white'
-    },
-    {
-      action: 'Marked',
-      target: '"Midnight Express"',
-      suffix: 'as Featured',
-      time: '1h ago',
-      color: 'text-cinema-gold'
-    },
-    {
-      action: 'Resolved content report #1024',
-      time: '3h ago',
-      color: 'text-white'
-    },
-    {
-      action: 'Indexed new 4K master encode for "Kaveri Calling"',
-      time: '5h ago',
-      color: 'text-cinema-teal'
-    },
-    {
-      action: 'Verified independent creator Harri Kumar',
-      time: '1d ago',
-      color: 'text-emerald-400'
-    }
-  ];
+  const auditLogs: any[] = [];
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -150,15 +120,6 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <a
-            href="/indian-short-movie-php.zip"
-            download="indian-short-movie-php.zip"
-            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-cinema-surface hover:bg-cinema-card border border-cinema-teal/40 text-cinema-teal text-xs font-bold shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02] cursor-pointer"
-            title="Download the full production-ready Pure PHP project as a ZIP"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download PHP Project (ZIP)</span>
-          </a>
           <button
             onClick={onOpenSubmitFilm}
             className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-cinema-accent hover:bg-cinema-accentHover text-white text-xs font-bold shadow-lg shadow-cinema-accent/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] cursor-pointer"
@@ -309,14 +270,14 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           </button>
 
           <button
-            onClick={() => onNavigateTab('reports')}
+            onClick={() => onNavigateTab('moderation')}
             className="p-4 rounded-2xl bg-cinema-card hover:bg-cinema-card/80 border border-cinema-border text-left group transition-all hover:border-cinema-accent/40"
           >
             <div className="flex items-center justify-between mb-2">
               <ShieldAlert className="w-5 h-5 text-rose-400" />
               <ArrowRight className="w-4 h-4 text-cinema-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
             </div>
-            <p className="text-sm font-bold text-white">Content Reports</p>
+            <p className="text-sm font-bold text-white">Content Moderation</p>
             <p className="text-xs text-cinema-muted mt-0.5">Community flags and moderation</p>
           </button>
 

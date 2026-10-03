@@ -1,114 +1,81 @@
 import React from 'react';
-import { Bookmark, Play, Trash2, ArrowRight, Film } from 'lucide-react';
 import { ShortFilm } from '../types';
+import { Star, Play, Trash2, Heart } from 'lucide-react';
 
 interface WatchlistPageProps {
   films: ShortFilm[];
   savedFilmIds: string[];
   onSelectFilm: (film: ShortFilm) => void;
-  onRemoveFromWatchlist: (filmId: string) => void;
+  onRemoveFromWatchlist: (id: string) => void;
   onNavigateTab: (tab: string) => void;
 }
 
-export const WatchlistPage: React.FC<WatchlistPageProps> = ({
-  films,
-  savedFilmIds,
-  onSelectFilm,
-  onRemoveFromWatchlist,
-  onNavigateTab
+export const WatchlistPage: React.FC<WatchlistPageProps> = ({ 
+  films, savedFilmIds, onSelectFilm, onRemoveFromWatchlist, onNavigateTab 
 }) => {
-  const savedFilms = films.filter(f => savedFilmIds.includes(f.id));
+  const languagePriority = (lang: string) => {
+    if (lang === 'Kannada') return 0;
+    const indianLangs = ['Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Gujarati', 'Bengali', 'Marathi', 'Urdu', 'Odia', 'Punjabi'];
+    if (indianLangs.includes(lang)) return 1;
+    return 2;
+  };
+
+  const savedFilms = films
+    .filter(f => savedFilmIds.includes(f.id))
+    .sort((a, b) => {
+      const pA = languagePriority(a.language);
+      const pB = languagePriority(b.language);
+      if (pA !== pB) return pA - pB;
+      return 0;
+    });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white mb-2">
-          My Watchlist
-        </h1>
-        <p className="text-xs sm:text-sm text-cinema-muted">
-          Curate your personal collection of must-watch Indian short cinema.
-        </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10 animate-fadeIn">
+      <div className="text-center space-y-3">
+         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cinema-accent/10 border border-cinema-accent/20 text-cinema-accent mb-2">
+            <Heart className="w-8 h-8 fill-current" />
+         </div>
+         <h1 className="font-display font-black text-4xl text-white tracking-tight uppercase">My Watchlist</h1>
+         <p className="text-sm text-cinema-muted uppercase tracking-[0.2em] font-bold">Your curated collection of Indian independent cinema</p>
       </div>
 
-      {/* Grid of Saved Films or Empty State */}
-      {savedFilms.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-          {savedFilms.map((film) => (
-            <div
-              key={film.id}
-              className="bg-cinema-card rounded-2xl overflow-hidden border border-cinema-border group hover:border-cinema-gold/50 transition-all flex flex-col justify-between shadow-xl"
-            >
-              <div 
-                onClick={() => onSelectFilm(film)}
-                className="relative aspect-[2/3] w-full overflow-hidden bg-cinema-surface cursor-pointer"
-              >
-                <img
-                  src={film.posterUrl}
-                  alt={film.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <div className="w-10 h-10 rounded-full bg-cinema-accent/90 flex items-center justify-center shadow-lg">
-                    <Play className="w-4 h-4 text-white fill-white ml-0.5" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 space-y-2">
-                <div>
-                  <h3 
-                    onClick={() => onSelectFilm(film)}
-                    className="font-bold text-sm text-white truncate cursor-pointer hover:text-cinema-accent transition-colors"
-                  >
-                    {film.title}
-                  </h3>
-                  <span className="text-xs text-cinema-muted block mt-0.5">
-                    Dir. {film.director}
-                  </span>
-                  <span className="text-[11px] text-cinema-teal font-medium block">
-                    {film.language} • {film.genre}
-                  </span>
-                </div>
-
-                <div className="pt-2 border-t border-cinema-border/50 flex items-center justify-between">
-                  <button
-                    onClick={() => onSelectFilm(film)}
-                    className="text-xs text-cinema-gold font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Watch</span>
-                    <Play className="w-3 h-3 fill-cinema-gold" />
-                  </button>
-                  <button
-                    onClick={() => onRemoveFromWatchlist(film.id)}
-                    className="p-1.5 rounded-lg bg-cinema-surface hover:bg-red-500/20 text-cinema-muted hover:text-red-400 transition-colors cursor-pointer"
-                    title="Remove from Watchlist"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+      {savedFilms.length === 0 ? (
+        <div className="py-24 text-center bg-cinema-card rounded-3xl border border-white/5 space-y-6 shadow-2xl">
+          <p className="text-cinema-muted font-bold uppercase tracking-[0.3em]">Your watchlist is waiting for stories</p>
+          <button 
+            onClick={() => onNavigateTab('films')}
+            className="px-8 py-4 rounded-2xl bg-cinema-accent hover:bg-cinema-accentHover text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl"
+          >
+            Discover Films
+          </button>
         </div>
       ) : (
-        <div className="bg-cinema-card rounded-3xl p-16 text-center border border-cinema-border space-y-4 max-w-xl mx-auto shadow-2xl">
-          <Bookmark className="w-16 h-16 text-cinema-border mx-auto opacity-70" />
-          <h3 className="font-display font-bold text-white text-xl">
-            Your Watchlist is Empty
-          </h3>
-          <p className="text-xs text-cinema-muted leading-relaxed">
-            Explore hundreds of award-winning regional short films, documentaries, and indie gems across India to save them here for later viewing.
-          </p>
-          <div className="pt-2">
-            <button
-              onClick={() => onNavigateTab('films')}
-              className="px-6 py-3 rounded-2xl bg-cinema-accent hover:bg-cinema-accentHover text-white text-xs font-bold shadow-lg shadow-cinema-accent/30 inline-flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
-            >
-              <span>Explore Discover Catalog</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
+          {savedFilms.map(film => (
+            <div key={film.id} className="group relative bg-cinema-card rounded-2xl overflow-hidden border border-white/5 hover:border-cinema-accent/50 transition-all shadow-xl">
+               <div className="aspect-[2/3] relative overflow-hidden bg-cinema-surface">
+                  <img src={film.posterUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-4 transition-opacity">
+                     <button onClick={() => onSelectFilm(film)} className="p-4 rounded-full bg-cinema-accent text-white shadow-2xl hover:scale-110 transition-transform">
+                        <Play className="w-6 h-6 fill-current ml-1" />
+                     </button>
+                  </div>
+                  <button 
+                    onClick={() => onRemoveFromWatchlist(film.id)}
+                    className="absolute top-3 right-3 p-2 rounded-xl bg-black/60 backdrop-blur-md text-white hover:text-red-500 transition-colors border border-white/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+               </div>
+               <div className="p-4 space-y-1">
+                  <h3 className="font-bold text-sm text-white truncate group-hover:text-cinema-accent transition-colors">{film.title}</h3>
+                  <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-widest text-cinema-teal">
+                     <span>{film.language}</span>
+                     <span className="text-cinema-gold">★ {film.rating}</span>
+                  </div>
+               </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -1,50 +1,54 @@
-# Indian Short Movie - Pure PHP (PHP 8+) Web Application
+# Indian Short Movie - Pure PHP 8+ Project
 
-Production-ready, responsive Indian Short Cinema & Filmmaker platform built with pure PHP 8+.
+This is a production-ready PHP conversion of the Indian Short Movie website.
 
-## Features Included
-- **Pure PHP 8+ Architecture**: All pages are native `.php` files with clean server-side includes.
-- **Includes Structure**:
-  - `includes/header.php` - HTML `<head>`, meta tags, Google Fonts (`Outfit`, `Inter`, `Cinzel`), OpenGraph cards, CSS links.
-  - `includes/navbar.php` - Brand logo SVG (ticket & "India's Stories on Screen"), links, search bar, Submit Film modal trigger, Admin button, mobile drawer menu.
-  - `includes/sidebar.php` - Dedicated Admin Portal sidebar (Desktop pinned, Mobile slide drawer with backdrop).
-  - `includes/footer.php` - Multi-column footer with required credit:
-    `© 2026 Indian Short Films. All rights reserved. With love ❤️ HOSTING BABA`
-    (Linking to https://webhostingbaba.com) + Video Player Modal, Submit Film Modal, and Sign In Modal.
-- **Pages**:
-  - `index.php` - Featured Hero premiere, Regional spotlight pills, Trending short films, 9:16 Vertical cinema reels, Filmmakers roster, CTA.
-  - `discover.php` - Catalog with real-time language filter chips (Hindi, Kannada, Tamil, Malayalam, Telugu, Gujarati, Bengali, Marathi), search, duration badges, and video player.
-  - `watchlist.php` - Saved films watchlist with localStorage persistence, remove action, and clear watchlist.
-  - `filmmakers.php` - Independent Indian directors roster, awards, language badges, and film counts.
-  - `about.php` - Brand story, cinematic mission, and distribution vision.
-  - `contact.php` - Contact form, direct inquiry channels, and submission support.
-  - `gallery.php` - Curated project gallery.
-  - `admin/index.php` - Complete Admin Portal:
-    - **Platform Analytics & Dashboard**
-    - **Real-time overview of users, film uploads, submissions, and moderation**
-    - 8 Stats Cards: Total Users (2), Total Short Films (20), Published Films (20), Pending Submissions (0), Total Video Views (45,890), Total Reviews (1), Filmmakers (18), Pending Reports (0).
-    - Popular Indian Languages view share progress bars.
-    - Recent Admin Activity audit log list.
-    - Film Management catalog table with search & filters.
-    - Submissions Queue.
-    - Content Moderation Queue.
-    - Add New Film publishing modal.
+## Project Structure
 
-## How to Deploy
+- `/index.php` - Home Page
+- `/discover.php` - Film Catalog
+- `/watchlist.php` - User Watchlist
+- `/filmmakers.php` - Filmmaker Directory
+- `/submit-film.php` - Film Submission Form
+- `/admin/` - Separate Protected Admin Portal
+  - `login.php` - Admin Authentication
+  - `index.php` - Admin Dashboard
+  - `logout.php` - Session Termination
+- `/includes/` - Reusable PHP Components
+  - `auth.php` - Server-side Session Management
+  - `header.php` - Global Head & Styles
+  - `navbar.php` - Public Navigation
+  - `footer.php` - Global Footer & Branding
+- `/assets/` - Static Files (CSS, JS, Images, Videos)
 
-### 1. XAMPP / WAMP / MAMP (Local Testing)
-1. Extract `indian-short-movie-php.zip` into your web root:
-   - XAMPP: `C:/xampp/htdocs/indian-short-movie/`
-   - MAMP: `/Applications/MAMP/htdocs/indian-short-movie/`
-2. Start Apache from the XAMPP Control Panel.
-3. Open your browser and navigate to:
-   `http://localhost/indian-short-movie/`
-4. Access the Admin Portal at:
-   `http://localhost/indian-short-movie/admin/`
+## Access Credentials (Demo)
 
-### 2. cPanel / Hostinger / Shared Hosting
-1. Log into your cPanel or Hostinger hPanel.
-2. Open **File Manager** and navigate to `public_html/`.
-3. Upload `indian-short-movie-php.zip` and click **Extract**.
-4. Make sure PHP version is set to **PHP 8.0, 8.1, 8.2, or 8.3+** in your hosting control panel.
-5. Visit your domain name. All URLs, includes, stylesheets, and scripts work out of the box!
+### Administrator
+- **Email**: `admin@example.com`
+- **Password**: `admin123`
+- **Role**: Full platform management
+
+### Standard User
+- **Email**: `user@example.com`
+- **Password**: `user123`
+- **Role**: Public features & film submissions
+
+## Key Features Implemented
+
+- **Unified Auth System**: Role-based access control (RBAC) using native PHP 8+ sessions.
+- **Protected Admin Portal**: Comprehensive dashboard for film, user, and content moderation.
+- **Public User Features**: Standalone login/registration and protected submission flow.
+- **Kannada First Priority**: Intelligent sorting and prioritization of Kannada content across the platform.
+- **Enhanced Homepage**: New "Top Rated Cinema" and "Trending Now" sections.
+- **Responsive Architecture**: Fully responsive mobile menu and admin sidebar.
+- **Security Protocols**: Direct URL protection and secure session invalidation.
+
+## Setup
+
+1. Upload all files to your PHP-enabled web server.
+2. Ensure the `/assets/` folder is accessible.
+3. Access the website via your domain (e.g., `https://yourdomain.com`).
+4. Access the Admin Portal at `https://yourdomain.com/admin/`.
+
+---
+© 2026 Indian Short Films. All rights reserved.
+With love ❤️ HOSTING BABA

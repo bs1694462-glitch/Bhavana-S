@@ -1,0 +1,24 @@
+{
+  "functions": {
+    "**/*.php": {
+      "runtime": "vercel-php@0.7.3"
+    }
+  },
+  "routes": [
+    { "src": "/admin", "dest": "/admin/index.php" },
+    { "src": "/admin/", "dest": "/admin/index.php" },
+    { "src": "/auth", "dest": "/auth.php" },
+    { "src": "/index", "dest": "/index.php" },
+    { "src": "/discover", "dest": "/discover.php" },
+    { "src": "/watchlist", "dest": "/watchlist.php" },
+    { "src": "/filmmakers", "dest": "/filmmakers.php" },
+    { "src": "/about", "dest": "/about.php" },
+    { "src": "/contact", "dest": "/contact.php" },
+    { "src": "/gallery", "dest": "/gallery.php" },
+    { "src": "/(.*).php", "dest": "/$1.php" },
+    { "src": "/css/(.*)", "dest": "/css/$1" },
+    { "src": "/js/(.*)", "dest": "/js/$1" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*)", "dest": "/index.php" }
+  ]
+}

@@ -107,3 +107,41 @@
 .animate-glow {
   animation: pulseGlow 6s ease-in-out infinite;
 }
+
+/* RESPONSIVE & OVERFLOW FIXES */
+body, html {
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .max-w-7xl {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  
+  /* Fix button and text wrapping */
+  button, span, p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Admin portal mobile tweaks */
+  aside {
+    z-index: 100 !important;
+  }
+}
+
+/* Ensure images and videos don't overflow */
+img, video {
+  max-width: 100%;
+  height: auto;
+}

@@ -1,6 +1,6 @@
 {
   "name": "Indian Short Movie",
-  "description": "The premier cinematic platform for Indian short films, vertical reels, independent filmmakers, and digital creators.",
+  "description": "Premium cinematic platform for Indian short films with secure Admin Portal and Kannada first priority.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

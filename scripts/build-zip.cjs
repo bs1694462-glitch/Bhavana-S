@@ -16,7 +16,8 @@ function buildZip() {
     'filmmakers.php',
     'about.php',
     'contact.php',
-    'gallery.php'
+    'gallery.php',
+    'auth.php'
   ];
 
   phpFiles.forEach(file => {
@@ -24,6 +25,16 @@ function buildZip() {
     if (fs.existsSync(filePath)) {
       zip.addLocalFile(filePath, '');
       console.log(`Added: ${file}`);
+    }
+  });
+
+  // Config files
+  const configFiles = ['vercel.json'];
+  configFiles.forEach(file => {
+    const filePath = path.join(rootDir, file);
+    if (fs.existsSync(filePath)) {
+      zip.addLocalFile(filePath, '');
+      console.log(`Added config: ${file}`);
     }
   });
 
@@ -87,10 +98,6 @@ function buildZip() {
 
   zip.writeZip(rootZipPath);
   console.log(`Successfully written: ${rootZipPath}`);
-
-  // Also write to public folder for direct browser download
-  zip.writeZip(publicZipPath);
-  console.log(`Successfully written: ${publicZipPath}`);
 }
 
 buildZip();

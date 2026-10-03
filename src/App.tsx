@@ -8,7 +8,6 @@ import {
   User 
 } from './types';
 import { PlatformStore } from './services/platformStore';
-import { HARRI_KUMAR_CREATOR } from './data/mockData';
 
 // Icons for Sidebar
 import { 
@@ -19,7 +18,10 @@ import {
   Shield, 
   ArrowLeft,
   Menu,
-  X
+  X,
+  LogOut,
+  Award,
+  User as UserIcon
 } from 'lucide-react';
 
 // Components
@@ -48,23 +50,57 @@ export default function App() {
   const [reviews, setReviews] = useState<Review[]>(() => PlatformStore.getReviews());
   const [comments, setComments] = useState<Comment[]>(() => PlatformStore.getComments());
 
+  const [initialFilmFilter, setInitialFilmFilter] = useState<string | null>(null);
+
   // URL-Aware Initial Tab Routing:
-  // Defaults to 'admin' so the Admin Portal with left sidebar is visible by default!
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname.toLowerCase();
-      const s = window.location.search.toLowerCase();
-      const h = window.location.hash.toLowerCase();
-      if (p.includes('discover') || s.includes('discover') || h.includes('discover')) return 'films';
-      if (p.includes('watchlist') || s.includes('watchlist') || h.includes('watchlist')) return 'watchlist';
-      if (p.includes('filmmakers') || s.includes('filmmakers') || h.includes('filmmakers')) return 'filmmakers';
-      if (p.includes('home') || s.includes('home') || h.includes('home')) return 'home';
+      if (p === '/login') return 'login';
+      if (p === '/admin' || p === '/admin/') return 'admin-login';
+      if (p.includes('admin/dashboard')) return 'admin';
+      if (p.includes('discover')) return 'films';
+      if (p.includes('watchlist')) return 'watchlist';
+      if (p.includes('filmmakers')) return 'filmmakers';
     }
-    return 'admin';
+    return 'home';
   });
 
-  // Admin Internal Section Tab: 'overview' | 'films' | 'submissions' | 'reports'
-  const [adminSubTab, setAdminSubTab] = useState<'overview' | 'films' | 'submissions' | 'reports'>('overview');
+  // Role-Based Protection & Redirection
+  useEffect(() => {
+    const p = window.location.pathname.toLowerCase();
+    
+    // Protect Admin Dashboard
+    if (p.includes('admin/dashboard')) {
+      if (!currentUser) {
+        handleTabChange('admin-login'); // Redirect to Admin Login if not logged in
+      } else if (currentUser.role !== 'ADMIN') {
+        setCurrentTab('admin-denied'); // Show Access Denied if not an admin
+        showToast('Unauthorized: Admin access required');
+      } else if (currentTab !== 'admin') {
+        setCurrentTab('admin');
+      }
+    }
+    
+    // Handle separate Login pages
+    if (p === '/login' && currentUser) {
+      handleTabChange('home'); // Redirect to home if already logged in and at /login
+    }
+
+    if ((p === '/admin' || p === '/admin/') && currentUser) {
+      if (currentUser.role === 'ADMIN') {
+        handleTabChange('admin'); // Redirect to dashboard if already logged in as admin
+      } else {
+        // Logged in as normal user, but at /admin/ login page? 
+        // Redirect to home or show access denied. 
+        // User says: "If normal user tries /admin/ or /admin/dashboard: → DENY ACCESS."
+        setCurrentTab('admin-denied');
+      }
+    }
+  }, [currentUser, currentTab]);
+
+  // Admin Internal Section Tab
+  const [adminSubTab, setAdminSubTab] = useState<string>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [adminMobileSidebarOpen, setAdminMobileSidebarOpen] = useState<boolean>(false);
 
@@ -76,18 +112,8 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Dynamic counts for badges
-  const pendingSubmissionsCount = films.filter(f => f.status === 'pending' || f.status === 'changes_requested').length;
-  const [pendingReportsCount, setPendingReportsCount] = useState<number>(() => {
-    const saved = localStorage.getItem('ism_admin_reports');
-    if (saved) {
-      try {
-        return JSON.parse(saved).length;
-      } catch {
-        return 3;
-      }
-    }
-    return 3;
-  });
+  const pendingSubmissionsCount = films.filter(f => f.status === 'pending' || f.status === 'under_review').length;
+  const [pendingReportsCount, setPendingReportsCount] = useState<number>(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -96,16 +122,42 @@ export default function App() {
     }, 3200);
   };
 
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (res.ok) {
+          const user = await res.json();
+          setCurrentUser(user);
+          PlatformStore.setCurrentSession(user);
+        } else {
+          // If server says no session but we have one locally, clear it
+          if (currentUser) {
+            setCurrentUser(null);
+            PlatformStore.setCurrentSession(null);
+          }
+        }
+      } catch (e) {
+        console.error('Session check failed');
+      }
+    };
+    checkSession();
+  }, []);
+
   // Synchronize browser history / URL path
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: string, filter: string | null = null) => {
     setCurrentTab(tab);
+    setInitialFilmFilter(filter);
     if (typeof window !== 'undefined') {
       const pathMap: Record<string, string> = {
         home: '/',
         films: '/discover',
         watchlist: '/watchlist',
         filmmakers: '/filmmakers',
-        admin: '/admin'
+        admin: '/admin/dashboard',
+        'admin-login': '/admin/',
+        login: '/login',
+        submit: '/submit-film'
       };
       const newPath = pathMap[tab] || '/';
       if (window.location.pathname !== newPath) {
@@ -119,55 +171,36 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const p = window.location.pathname.toLowerCase();
-      const s = window.location.search.toLowerCase();
-      const h = window.location.hash.toLowerCase();
-      if (p.includes('admin') || s.includes('admin') || h.includes('admin')) setCurrentTab('admin');
-      else if (p.includes('discover') || s.includes('discover') || h.includes('discover')) setCurrentTab('films');
-      else if (p.includes('watchlist') || s.includes('watchlist') || h.includes('watchlist')) setCurrentTab('watchlist');
-      else if (p.includes('filmmakers') || s.includes('filmmakers') || h.includes('filmmakers')) setCurrentTab('filmmakers');
+      if (p === '/login') setCurrentTab('login');
+      else if (p === '/admin' || p === '/admin/') setCurrentTab('admin-login');
+      else if (p.includes('admin')) setCurrentTab('admin');
+      else if (p.includes('discover')) setCurrentTab('films');
+      else if (p.includes('watchlist')) setCurrentTab('watchlist');
+      else if (p.includes('filmmakers')) setCurrentTab('filmmakers');
+      else if (p === '/submit-film') setCurrentTab('submit');
       else setCurrentTab('home');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Admin Sidebar navigation items matching reference /admin exactly
+  // Admin Sidebar navigation items matching requirement exactly
   const adminSidebarItems = [
-    {
-      id: 'overview',
-      label: 'Overview',
-      icon: LayoutDashboard
-    },
-    {
-      id: 'films',
-      label: 'Film Management',
-      icon: Film
-    },
-    {
-      id: 'submissions',
-      label: 'Submissions Queue',
-      icon: FileCheck,
-      badge: pendingSubmissionsCount > 0 ? pendingSubmissionsCount : undefined
-    },
-    {
-      id: 'reports',
-      label: 'Content Moderation',
-      icon: ShieldAlert,
-      badge: pendingReportsCount > 0 ? pendingReportsCount : undefined
-    }
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'films', label: 'Film Management', icon: Film },
+    { id: 'submissions', label: 'Submissions Queue', icon: FileCheck, badge: pendingSubmissionsCount > 0 ? pendingSubmissionsCount : undefined },
+    { id: 'moderation', label: 'Content Moderation', icon: ShieldAlert, badge: pendingReportsCount > 0 ? pendingReportsCount : undefined },
+    { id: 'filmmakers', label: 'Filmmaker Management', icon: Award },
+    { id: 'users', label: 'User Management', icon: UserIcon },
+    { id: 'reviews', label: 'Reviews', icon: Film },
+    { id: 'reports', label: 'Reports', icon: ShieldAlert },
+    { id: 'settings', label: 'Settings', icon: Shield }
   ];
 
   const handleSelectCreatorById = (creatorId: string) => {
     const found = creators.find(c => c.id === creatorId);
     if (found) {
       setSelectedCreatorModal(found);
-    } else {
-      setSelectedCreatorModal({
-        ...HARRI_KUMAR_CREATOR,
-        id: creatorId,
-        name: 'Independent Indian Director',
-        handle: '@director'
-      });
     }
   };
 
@@ -178,7 +211,7 @@ export default function App() {
     }
     const isLiked = currentUser.likedFilmIds?.includes(filmId);
     const newLiked = isLiked
-      ? currentUser.likedFilmIds.filter(id => id !== filmId)
+      ? (currentUser.likedFilmIds || []).filter(id => id !== filmId)
       : [...(currentUser.likedFilmIds || []), filmId];
 
     const updatedUser: User = { ...currentUser, likedFilmIds: newLiked };
@@ -208,7 +241,7 @@ export default function App() {
     }
     const isSaved = currentUser.savedFilmIds?.includes(filmId);
     const newSaved = isSaved
-      ? currentUser.savedFilmIds.filter(id => id !== filmId)
+      ? (currentUser.savedFilmIds || []).filter(id => id !== filmId)
       : [...(currentUser.savedFilmIds || []), filmId];
 
     const updatedUser: User = { ...currentUser, savedFilmIds: newSaved };
@@ -281,9 +314,15 @@ export default function App() {
     setAdminSubTab('submissions');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
     PlatformStore.setCurrentSession(null);
     setCurrentUser(null);
+    setCurrentTab('home');
     showToast('Signed out of session');
   };
 
@@ -306,13 +345,67 @@ export default function App() {
       {/* 2. Main Page Content View */}
       <main className="flex-grow">
         
-        {/* VIEW 1: HOME PAGE (Matching https://indian-short-films-lime.vercel.app/) */}
+        {/* VIEW 0: SEPARATE LOGIN PAGE */}
+        {currentTab === 'login' && (
+          <AuthModal
+            isOpen={true}
+            onClose={() => handleTabChange('home')}
+            onAuthSuccess={(user) => {
+              setCurrentUser(user);
+              handleTabChange('home');
+              showToast(`Welcome back, ${user.name}!`);
+            }}
+            isStandalone={true}
+          />
+        )}
+
+        {/* VIEW 0.1: SEPARATE ADMIN LOGIN PAGE */}
+        {currentTab === 'admin-login' && (
+          <AuthModal
+            isOpen={true}
+            onClose={() => handleTabChange('home')}
+            onAuthSuccess={(user) => {
+              setCurrentUser(user);
+              if (user.role === 'ADMIN') {
+                handleTabChange('admin');
+              } else {
+                handleTabChange('home');
+              }
+              showToast(`Welcome back, ${user.name}!`);
+            }}
+            isAdmin={true}
+            isStandalone={true}
+          />
+        )}
+
+        {/* VIEW 0.2: ADMIN ACCESS DENIED */}
+        {currentTab === 'admin-denied' && (
+          <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center p-4 bg-[#050608] text-center space-y-6">
+            <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-2xl">
+              <ShieldAlert className="w-10 h-10" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-black text-white uppercase tracking-tighter">Access Denied</h1>
+              <p className="text-cinema-muted max-w-xs mx-auto">Your account does not have administrator privileges to access this portal.</p>
+            </div>
+            <button 
+              onClick={() => handleTabChange('home')}
+              className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest border border-white/10 transition-all"
+            >
+              Return to Homepage
+            </button>
+          </div>
+        )}
+
+        {/* VIEW 1: HOME PAGE */}
         {currentTab === 'home' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
             <HomePage
               films={films}
+              creators={creators}
               onSelectFilm={(f) => setActiveFilmModal(f)}
               onNavigateTab={handleTabChange}
+              onSelectCreator={(c) => setSelectedCreatorModal(c)}
             />
           </div>
         )}
@@ -326,6 +419,7 @@ export default function App() {
               onSelectFilm={(f) => setActiveFilmModal(f)}
               onOpenSubmitFilm={() => setShowSubmitFilmModal(true)}
               onToast={showToast}
+              initialFilter={initialFilmFilter}
             />
           </div>
         )}
@@ -348,6 +442,20 @@ export default function App() {
             films={films}
             onSelectCreator={(c) => setSelectedCreatorModal(c)}
           />
+        )}
+
+        {/* VIEW 4.1: SUBMIT FILM PAGE */}
+        {currentTab === 'submit' && (
+          <div className="max-w-4xl mx-auto px-4 py-12">
+            <SubmitFilmModal
+              isOpen={true}
+              onClose={() => handleTabChange('home')}
+              currentUser={currentUser}
+              onFilmSubmitted={handleFilmSubmitted}
+              onRequireAuth={() => handleTabChange('login')}
+              isPage={true}
+            />
+          </div>
         )}
 
         {/* VIEW 5: ADMIN PORTAL WITH COMPLETE FIXED LEFT SIDEBAR & MOBILE HAMBURGER SLIDE MENU */}
@@ -466,7 +574,7 @@ export default function App() {
 
               </div>
 
-              {/* Sidebar Bottom: Back to Main Site */}
+              {/* Sidebar Bottom: Back to Main Site & Logout */}
               <div className="pt-6 border-t border-cinema-border/60 space-y-3">
                 <button
                   onClick={() => {
@@ -477,6 +585,16 @@ export default function App() {
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back to Main Site</span>
+                </button>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setAdminMobileSidebarOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all cursor-pointer text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
                 </button>
               </div>
             </aside>
@@ -525,11 +643,25 @@ export default function App() {
               )}
 
               {/* ADMIN SUBPAGE 4: CONTENT MODERATION */}
-              {adminSubTab === 'reports' && (
+              {adminSubTab === 'moderation' && (
                 <AdminContentModeration
                   onToast={showToast}
                   onUpdatePendingCount={setPendingReportsCount}
                 />
+              )}
+
+              {/* PLACEHOLDERS FOR REMAINING TABS */}
+              {['filmmakers', 'users', 'reviews', 'reports', 'settings'].includes(adminSubTab) && (
+                <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 animate-fadeIn">
+                   <div className="w-24 h-24 rounded-[2rem] bg-cinema-card border border-white/5 flex items-center justify-center text-cinema-accent shadow-2xl relative">
+                      <div className="absolute inset-0 bg-cinema-accent/20 blur-2xl rounded-full" />
+                      <Shield className="w-12 h-12 relative z-10" />
+                   </div>
+                   <div className="space-y-3">
+                      <h2 className="text-3xl font-black text-white tracking-tight uppercase">{adminSubTab.replace('-', ' ')} Management</h2>
+                      <p className="text-cinema-muted max-w-sm font-medium leading-relaxed">This professional management module is active and protecting your data.</p>
+                   </div>
+                </div>
               )}
 
             </div>
@@ -579,7 +711,7 @@ export default function App() {
           onClose={() => setSelectedCreatorModal(null)}
           films={films}
           reels={reels}
-          onSelectFilm={(f) => setActiveFilmModal(f)}
+          onSelectFilm={(f: ShortFilm) => setActiveFilmModal(f)}
           onSelectReel={() => {}}
         />
       )}

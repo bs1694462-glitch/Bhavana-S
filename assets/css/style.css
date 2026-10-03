@@ -1,0 +1,41 @@
+/* Indian Short Movie - Custom Cinema Styles */
+:root {
+  --cinema-bg: #07080b;
+  --cinema-surface: #111319;
+  --cinema-card: #181b24;
+  --cinema-border: #262a36;
+  --cinema-accent: #e50914;
+  --cinema-accent-hover: #b80710;
+  --cinema-gold: #ffb703;
+  --cinema-teal: #66fcf1;
+  --cinema-muted: #8e95a5;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--cinema-bg); }
+::-webkit-scrollbar-thumb { background: var(--cinema-border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cinema-accent); }
+
+.glass-panel {
+  background: rgba(17, 19, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(229, 9, 20, 0.3) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}

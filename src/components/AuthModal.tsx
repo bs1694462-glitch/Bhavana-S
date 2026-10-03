@@ -1,402 +1,159 @@
 import React, { useState } from 'react';
-import { X, LogIn, UserPlus, Shield, Film, Clapperboard, Briefcase, Eye, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { User, UserRole } from '../types';
+import { X, LogIn, Mail, Lock, Shield, User as UserIcon } from 'lucide-react';
+import { User } from '../types';
 import { PlatformStore } from '../services/platformStore';
 
 interface AuthModalProps {
+  isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (user: User) => void;
+  onAuthSuccess: (user: User) => void;
+  isAdmin?: boolean;
+  isStandalone?: boolean;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({
-  onClose,
-  onLoginSuccess
+export const AuthModal: React.FC<AuthModalProps> = ({ 
+  isOpen, onClose, onAuthSuccess, isAdmin = false, isStandalone = false 
 }) => {
-  const [isRegister, setIsRegister] = useState(false);
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  
-  // Registration specific fields
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('filmmaker');
-  const [bio, setBio] = useState('');
-  const [brandName, setBrandName] = useState('');
-  const [website, setWebsite] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [profession, setProfession] = useState('');
-  const [location, setLocation] = useState('');
-  const [industry, setIndustry] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  if (!isOpen) return null;
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
-    setIsLoading(true);
+    setError(null);
+    setLoading(true);
 
-    const res = await PlatformStore.loginUser(identifier, password);
-    setIsLoading(false);
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-    if (res.success && res.user) {
-      onLoginSuccess(res.user);
-      onClose();
-    } else {
-      setErrorMsg(res.error || 'Login failed. Please check your credentials.');
+      const data = await response.json();
+
+      if (data.success) {
+        if (isAdmin && data.user.role !== 'ADMIN') {
+          setError('Unauthorized: Admin account required');
+          setLoading(false);
+          return;
+        }
+        PlatformStore.setCurrentSession(data.user);
+        onAuthSuccess(data.user);
+        if (!isStandalone) onClose();
+      } else {
+        setError(data.message || 'Authentication failed.');
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-    setIsLoading(true);
-
-    const res = await PlatformStore.registerUser({
-      name,
-      username,
-      email,
-      password,
-      role,
-      bio,
-      brandName: role === 'brand' ? (brandName || name) : undefined,
-      website,
-      contactPhone,
-      profession: role === 'brand' ? undefined : (profession || (role === 'filmmaker' ? 'Film Director' : 'Video Creator')),
-      location,
-      industry: role === 'brand' ? industry : undefined,
-      brandCategory: role === 'brand' ? industry : undefined
-    });
-
-    setIsLoading(false);
-
-    if (res.success && res.user) {
-      setSuccessMsg(`Welcome to Indian Short Movie, ${res.user.name}!`);
-      setTimeout(() => {
-        onLoginSuccess(res.user!);
-        onClose();
-      }, 700);
-    } else {
-      setErrorMsg(res.error || 'Registration failed. Please check the inputs.');
-    }
-  };
+  const containerClasses = isStandalone 
+    ? "relative w-full max-w-md bg-cinema-card rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-white/5 animate-scaleIn overflow-hidden"
+    : "relative w-full max-w-md bg-cinema-card rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-white/5 animate-scaleIn overflow-hidden";
 
   return (
-    <div 
-      id="auth-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm overflow-y-auto"
-      onClick={onClose}
-    >
-      <div 
-        className="relative my-8 w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-2xl space-y-6 text-[#222222]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 rounded-full border border-gray-200 bg-gray-100 p-1.5 text-gray-500 hover:text-black hover:bg-gray-200 transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
+    <div className={isStandalone ? "w-full min-h-[calc(100vh-80px)] flex items-center justify-center bg-[#07080b] p-4" : "fixed inset-0 z-[100] flex items-center justify-center p-4"}>
+      {!isStandalone && <div className="absolute inset-0 bg-[#07080b]/95 backdrop-blur-md" onClick={onClose} />}
+      
+      <div className={containerClasses}>
+        {/* Glow Effect */}
+        <div className={`absolute -top-24 -left-24 w-48 h-48 ${isAdmin ? 'bg-cinema-accent/20' : 'bg-cinema-accent/10'} rounded-full blur-[100px]`} />
+        
+        {!isStandalone && (
+          <button onClick={onClose} className="absolute top-6 right-6 p-2 text-cinema-muted hover:text-white transition-colors cursor-pointer">
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
-        {/* Modal Header */}
-        <div className="text-center space-y-1.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f84464] text-white mx-auto shadow-md">
-            {isRegister ? <UserPlus className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
+        <div className="text-center space-y-4 mb-10">
+          <div className={`w-20 h-20 rounded-[2rem] bg-gradient-to-br ${isAdmin ? 'from-cinema-accent to-[#8b5cf6] shadow-cinema-accent/30' : 'from-cinema-accent to-[#dc2626] shadow-cinema-accent/20'} flex items-center justify-center text-white mx-auto shadow-2xl transition-transform hover:scale-110 duration-500`}>
+            {isAdmin ? <Shield className="w-10 h-10" /> : <LogIn className="w-10 h-10" />}
           </div>
-          <h3 className="text-xl font-bold text-[#222222]">
-            {isRegister ? "Create Your Account" : "Sign In to Indian Short Movie"}
-          </h3>
-          <p className="text-xs text-gray-500 max-w-xs mx-auto">
-            {isRegister 
-              ? "Join India's premier creator platform to upload films, stream reels, and connect with audiences."
-              : "Access your filmmaker dashboard, uploaded cinema, watchlists, and account settings."}
-          </p>
+          <div className="space-y-1">
+            <h2 className="text-3xl font-black text-white tracking-tighter leading-none uppercase">
+              {isAdmin ? 'Admin Portal' : (isLogin ? 'Welcome Back' : 'Join the Club')}
+            </h2>
+            <p className="text-[10px] text-cinema-muted uppercase tracking-[0.3em] font-black">
+              {isAdmin ? 'System Administrator Access' : (isLogin ? 'Member Login' : 'Create Viewer Account')}
+            </p>
+          </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-2 rounded-xl bg-gray-100 p-1 border border-gray-200">
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(false);
-              setErrorMsg(null);
-            }}
-            className={`rounded-lg py-2 text-xs font-bold transition-all ${
-              !isRegister ? 'bg-[#f84464] text-white shadow-sm' : 'text-gray-600 hover:text-black'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(true);
-              setErrorMsg(null);
-            }}
-            className={`rounded-lg py-2 text-xs font-bold transition-all ${
-              isRegister ? 'bg-[#f84464] text-white shadow-sm' : 'text-gray-600 hover:text-black'
-            }`}
-          >
-            Register
-          </button>
-        </div>
-
-        {/* Error / Success Notifications */}
-        {errorMsg && (
-          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-            <span>{errorMsg}</span>
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 text-xs font-bold animate-shake">
+            <Shield className="w-5 h-5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
-        {successMsg && (
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* Form Body */}
-        {!isRegister ? (
-          /* LOGIN FORM */
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-700">Username or Email Address</label>
-              <input
-                type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="e.g. harrikumargowda or your@email.com"
-                required
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-cinema-muted uppercase tracking-widest ml-1">Email Address</label>
+            <div className="relative group">
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+                placeholder="name@example.com" 
+                className="w-full bg-cinema-surface border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cinema-accent focus:ring-4 focus:ring-cinema-accent/10 transition-all placeholder-cinema-muted/50"
               />
+              <Mail className="w-4 h-4 text-cinema-muted absolute right-5 top-1/2 -translate-y-1/2 group-focus-within:text-cinema-accent transition-colors" />
             </div>
+          </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-700">Password</label>
-              <input
-                type="password"
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-[10px] font-bold text-cinema-muted uppercase tracking-widest">Secure Password</label>
+              {isLogin && <button type="button" className="text-[9px] font-black text-cinema-teal hover:underline uppercase tracking-widest">Forgot?</button>}
+            </div>
+            <div className="relative group">
+              <input 
+                type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your account password"
-                required
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
+                required 
+                placeholder="••••••••" 
+                className="w-full bg-cinema-surface border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cinema-accent focus:ring-4 focus:ring-cinema-accent/10 transition-all placeholder-cinema-muted/50"
               />
+              <Lock className="w-4 h-4 text-cinema-muted absolute right-5 top-1/2 -translate-y-1/2 group-focus-within:text-cinema-accent transition-colors" />
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-lg bg-[#f84464] hover:bg-[#e03352] py-2.5 text-xs font-bold text-white shadow-md active:scale-98 transition-all disabled:opacity-50"
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-cinema-accent hover:bg-cinema-accentHover disabled:opacity-50 text-white font-black py-4.5 rounded-2xl transition-all shadow-[0_20px_50px_-10px_rgba(229,9,20,0.3)] flex items-center justify-center gap-3 group active:scale-[0.98]"
+          >
+            <span>{loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Register')}</span>
+            {!loading && <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <p className="text-xs text-cinema-muted font-medium">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <button 
+              onClick={() => setIsLogin(!isLogin)}
+              className="ml-2 text-cinema-teal font-black hover:underline uppercase tracking-widest text-[10px]"
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLogin ? 'Create One' : 'Log In Now'}
             </button>
-          </form>
-        ) : (
-          /* REGISTRATION FORM */
-          <form onSubmit={handleRegisterSubmit} className="space-y-4">
-            {/* Role Selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-700">Account Type</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole('filmmaker')}
-                  className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-all ${
-                    role === 'filmmaker'
-                      ? 'border-[#f84464] bg-[#f84464]/10 text-[#f84464]'
-                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  <Film className="h-4 w-4" />
-                  <span className="text-[11px] font-bold">Filmmaker</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('creator')}
-                  className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-all ${
-                    role === 'creator'
-                      ? 'border-[#f84464] bg-[#f84464]/10 text-[#f84464]'
-                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  <Clapperboard className="h-4 w-4" />
-                  <span className="text-[11px] font-bold">Creator</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('brand')}
-                  className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-all ${
-                    role === 'brand'
-                      ? 'border-[#f84464] bg-[#f84464]/10 text-[#f84464]'
-                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  <Briefcase className="h-4 w-4" />
-                  <span className="text-[11px] font-bold">Brand / Studio</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('viewer')}
-                  className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-all ${
-                    role === 'viewer'
-                      ? 'border-[#f84464] bg-[#f84464]/10 text-[#f84464]'
-                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  <Eye className="h-4 w-4" />
-                  <span className="text-[11px] font-bold">Viewer</span>
-                </button>
-              </div>
-
-              {role === 'brand' && (
-                <div className="rounded-lg border border-amber-300 bg-amber-50/80 p-2.5 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
-                  <Briefcase className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
-                  <span>
-                    <strong>Brand Account:</strong> Upload your brand films, commercials, sponsored reels, and showcase campaigns with verified partner badges and direct call-to-action links.
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Full Name / Display Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Ramesh Varma"
-                  required
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. ramesh_cinema"
-                  required
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@domain.com"
-                  required
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
-                  required
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {role === 'brand' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Brand / Studio Name</label>
-                  <input
-                    type="text"
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="e.g. Red Chillies Indie Studio"
-                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Industry / Sector</label>
-                  <input
-                    type="text"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    placeholder="e.g. Media, OTT, Production House"
-                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Profession / Specialty</label>
-                <input
-                  type="text"
-                  value={profession}
-                  onChange={(e) => setProfession(e.target.value)}
-                  placeholder="e.g. Director, Writer, DP, Producer"
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Website / Portfolio</label>
-                <input
-                  type="url"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Phone / WhatsApp</label>
-                <input
-                  type="tel"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  placeholder="+91 ..."
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-700">Bio / About</label>
-              <textarea
-                rows={2}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell the Indian cinema community about your productions, craft, and vision..."
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#222222] placeholder-gray-400 focus:bg-white focus:border-[#f84464] focus:outline-none resize-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-lg bg-[#f84464] hover:bg-[#e03352] py-2.5 text-xs font-bold text-white shadow-md active:scale-98 transition-all disabled:opacity-50"
-            >
-              {isLoading ? "Creating Account..." : "Create Account & Get Started"}
-            </button>
-          </form>
-        )}
-
+          </p>
+        </div>
+        
+        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-3 opacity-30">
+          <Shield className="w-3 h-3 text-white" />
+          <span className="text-[8px] font-black text-white uppercase tracking-[0.4em]">Secure Encryption Active</span>
+        </div>
       </div>
     </div>
   );

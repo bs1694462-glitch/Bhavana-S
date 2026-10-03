@@ -12,7 +12,9 @@ import {
   LayoutDashboard,
   FileCheck,
   ShieldAlert,
-  Award
+  Award,
+  Star,
+  TrendingUp
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -151,18 +153,29 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
-  // Exact reference navbar tabs
+  // Exact requirement: Home | Discover | Watchlist | Filmmakers | Search | Admin | Sign In | SUBMIT FILM
   const navTabs = [
     { id: 'home', label: 'Home' },
     { id: 'films', label: 'Discover' },
     { id: 'watchlist', label: 'Watchlist' },
-    { id: 'filmmakers', label: 'Filmmakers' }
+    { id: 'filmmakers', label: 'Filmmakers' },
+    { id: 'search', label: 'Search' },
+    { id: 'admin', label: 'Admin' },
   ];
 
   const handleNavClick = (tabId: string) => {
-    setCurrentTab(tabId);
+    if (tabId === 'admin') {
+      setCurrentTab('admin-login');
+    } else if (tabId === 'login') {
+      setCurrentTab('login');
+    } else if (tabId === 'submit') {
+      setCurrentTab('submit');
+    } else if (tabId === 'search') {
+      setCurrentTab('films'); 
+    } else {
+      setCurrentTab(tabId);
+    }
     if (setMobileMenuOpen) setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -209,106 +222,71 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Action Controls matching reference */}
           <div className="hidden md:flex items-center gap-4">
             
-            {/* Search Input Box */}
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (onSearch) onSearch(e.target.value);
-                }}
-                placeholder="Search films..."
-                className="w-40 lg:w-48 pl-8 pr-3 py-2 rounded-xl bg-cinema-surface border border-cinema-border text-xs text-white placeholder-cinema-muted focus:outline-none focus:border-cinema-accent focus:w-56 transition-all"
-              />
-              <Search className="w-4 h-4 text-cinema-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </form>
-
-            {/* Submit Film Button matching reference */}
-            <button
-              onClick={onOpenSubmitFilm}
-              className="px-4 py-2 rounded-xl bg-cinema-surface hover:bg-cinema-card border border-cinema-border text-xs font-semibold text-white flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4 text-cinema-gold" />
-              <span>Submit Film</span>
-            </button>
-
-            {/* Admin Badge button */}
-            <button
-              onClick={() => handleNavClick('admin')}
-              className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                currentTab === 'admin'
-                  ? 'bg-cinema-card border-cinema-border text-cinema-accent shadow-sm'
-                  : 'bg-cinema-card/80 hover:bg-cinema-accent/20 border-cinema-border text-cinema-muted hover:text-cinema-accent'
-              }`}
-            >
-              <Shield className="w-4 h-4 text-cinema-accent" />
-              <span>Admin</span>
-            </button>
-
             {/* Sign In / User Profile */}
-            {currentUser ? (
-              <div className="relative">
+            <div className="flex items-center gap-4">
+              {!currentUser ? (
                 <button
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-cinema-surface transition-colors cursor-pointer"
+                  onClick={() => handleNavClick('login')}
+                  className="text-sm font-medium text-cinema-muted hover:text-white transition-colors cursor-pointer"
                 >
-                  <img
-                    src={currentUser.avatar || '/harri-kumar.jpg'}
-                    alt={currentUser.name}
-                    className="w-8 h-8 rounded-lg object-cover border border-cinema-border"
-                  />
+                  Sign In
                 </button>
-                {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-cinema-card border border-cinema-border rounded-xl shadow-2xl py-2 z-50">
-                    <div className="px-3 py-2 border-b border-cinema-border/50 text-xs">
-                      <p className="font-bold text-white">{currentUser.name}</p>
-                      <p className="text-[10px] text-cinema-muted truncate">{currentUser.email}</p>
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-cinema-surface transition-colors cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-cinema-accent/10 border border-cinema-accent/20 flex items-center justify-center text-cinema-accent font-bold text-[10px]">
+                      {currentUser.name.split(' ').map(n => n[0]).join('')}
                     </div>
-                    <button
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        handleNavClick('filmmakers');
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs text-cinema-muted hover:text-white hover:bg-cinema-surface flex items-center gap-2 cursor-pointer"
-                    >
-                      <UserIcon className="w-4 h-4" />
-                      Filmmaker Directory
-                    </button>
-                    <button
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        onLogout();
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-cinema-surface flex items-center gap-2 cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
+                  </button>
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-cinema-card border border-cinema-border rounded-2xl shadow-2xl py-3 z-50 overflow-hidden animate-fadeIn">
+                      <div className="px-4 py-3 border-b border-cinema-border/50 bg-white/5">
+                        <p className="text-xs font-black text-white uppercase tracking-tight">{currentUser.name}</p>
+                        <p className="text-[10px] text-cinema-muted truncate">{currentUser.email}</p>
+                        <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-cinema-accent/20 text-cinema-accent text-[8px] font-black uppercase tracking-widest">{currentUser.role}</span>
+                      </div>
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            handleNavClick('watchlist');
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-xs text-cinema-muted hover:text-white hover:bg-white/5 flex items-center gap-3 transition-colors"
+                        >
+                          <FileCheck className="w-4 h-4" />
+                          <span>My Watchlist</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            onLogout();
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-xs text-red-400 hover:text-white hover:bg-red-500/10 flex items-center gap-3 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <button
-                onClick={onOpenAuth}
-                className="px-4 py-2 rounded-xl bg-cinema-accent hover:bg-cinema-accentHover text-white text-xs font-bold shadow-md shadow-cinema-accent/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                onClick={() => handleNavClick('submit')}
+                className="px-6 py-2.5 rounded-xl bg-cinema-accent hover:bg-cinema-accentHover border border-cinema-accent text-[10px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cinema-accent/20 cursor-pointer"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Sign In</span>
+                SUBMIT FILM
               </button>
-            )}
+            </div>
 
           </div>
 
           {/* Mobile Actions */}
           <div className="flex md:hidden items-center gap-2">
-            <button
-              onClick={onOpenSubmitFilm}
-              className="p-2 rounded-lg bg-cinema-surface border border-cinema-border text-cinema-gold"
-              aria-label="Submit Film"
-            >
-              <PlusCircle className="w-5 h-5" />
-            </button>
             {setMobileMenuOpen && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -327,65 +305,39 @@ export const Navbar: React.FC<NavbarProps> = ({
       {mobileMenuOpen && (
         <div className="md:hidden bg-cinema-surface border-b border-cinema-border p-4 space-y-3">
           <div className="space-y-1">
+            {navTabs.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
+                  currentTab === item.id ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
+                }`}
+              >
+                <span className="truncate">{item.label}</span>
+              </button>
+            ))}
+            {!currentUser && (
+              <button
+                onClick={() => handleNavClick('login')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
+                  currentTab === 'login' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
+                }`}
+              >
+                <span>Sign In</span>
+              </button>
+            )}
             <button
-              onClick={() => handleNavClick('home')}
+              onClick={() => handleNavClick('submit')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
-                currentTab === 'home' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
+                currentTab === 'submit' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
               }`}
             >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Home</span>
-            </button>
-            <button
-              onClick={() => handleNavClick('films')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
-                currentTab === 'films' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
-              }`}
-            >
-              <Film className="w-4 h-4" />
-              <span>Discover</span>
-            </button>
-            <button
-              onClick={() => handleNavClick('watchlist')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
-                currentTab === 'watchlist' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
-              }`}
-            >
-              <FileCheck className="w-4 h-4" />
-              <span>Watchlist</span>
-            </button>
-            <button
-              onClick={() => handleNavClick('filmmakers')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
-                currentTab === 'filmmakers' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
-              }`}
-            >
-              <Award className="w-4 h-4" />
-              <span>Filmmakers</span>
-            </button>
-            <button
-              onClick={() => handleNavClick('admin')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
-                currentTab === 'admin' ? 'bg-cinema-accent text-white' : 'text-cinema-muted hover:text-white hover:bg-cinema-card'
-              }`}
-            >
-              <Shield className="w-4 h-4 text-cinema-accent" />
-              <span>Admin Portal</span>
+              <span>SUBMIT FILM</span>
             </button>
           </div>
 
           <div className="pt-3 border-t border-cinema-border/50 flex flex-col gap-2">
-            <button
-              onClick={() => {
-                if (setMobileMenuOpen) setMobileMenuOpen(false);
-                onOpenSubmitFilm();
-              }}
-              className="w-full py-2.5 rounded-xl bg-cinema-card border border-cinema-border text-xs font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4 text-cinema-gold" />
-              <span>Submit Film</span>
-            </button>
-            {currentUser ? (
+            {currentUser && (
               <button
                 onClick={() => {
                   if (setMobileMenuOpen) setMobileMenuOpen(false);
@@ -395,17 +347,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out ({currentUser.name})</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (setMobileMenuOpen) setMobileMenuOpen(false);
-                  onOpenAuth();
-                }}
-                className="w-full py-2.5 rounded-xl bg-cinema-accent text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Sign In</span>
               </button>
             )}
           </div>

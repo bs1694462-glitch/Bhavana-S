@@ -45,18 +45,25 @@
             <div class="flex items-center gap-8">
                 <a href="index.php" class="group flex flex-col items-start select-none">
                     <div class="flex items-center gap-2">
-                        <!-- 'indian' wordmark -->
                         <span class="font-black text-lg sm:text-xl text-white flex items-center leading-none">
                             <span class="relative inline-block">i<span class="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-[#f84464] shadow-[0_0_8px_#f84464]"></span></span>nd<span class="relative inline-block">i<span class="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-[#f84464] shadow-[0_0_8px_#f84464]"></span></span>an
                         </span>
-                        <!-- 'short' Ticket -->
-                        <div class="bg-gradient-to-br from-[#f84464] via-[#dc2626] to-[#8b5cf6] px-3 py-1 rounded-lg -rotate-2 group-hover:rotate-0 transition-transform duration-200 flex items-center gap-1.5">
-                            <span class="text-white font-black text-sm uppercase tracking-tighter">short</span>
-                            <div class="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center">
-                                <div class="w-0 h-0 border-t-[3px] border-t-transparent border-l-[5px] border-l-[#dc2626] border-b-[3px] border-b-transparent ml-0.5"></div>
-                            </div>
+                        
+                        <div class="relative inline-flex items-center justify-center -rotate-2 transition-transform duration-200 group-hover:rotate-0 group-hover:scale-105 h-6 sm:h-6.5">
+                            <svg viewBox="0 0 94 36" class="h-full drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="navTicketGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#f84464" />
+                                        <stop offset="60%" stopColor="#dc2626" />
+                                        <stop offset="100%" stopColor="#8b5cf6" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M 6 0 L 39 0 A 6 6 0 0 1 55 0 L 88 0 C 91.3 0 94 2.7 94 6 L 94 30 C 94 33.3 89.3 36 88 36 L 55 36 A 6 6 0 0 1 39 36 L 6 36 C 2.7 36 0 33.3 0 30 L 0 6 C 0 2.7 2.7 0 6 0 Z" fill="url(#navTicketGradientDark)" />
+                                <text x="11" y="24" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="16.5" letter-spacing="-0.6px">short</text>
+                                <g transform="translate(64, 10)"><circle cx="8" cy="8" r="7.5" fill="#ffffff" /><polygon points="6.5,5 11.5,8 6.5,11" fill="#dc2626" /></g>
+                            </svg>
                         </div>
-                        <!-- 'movie' wordmark -->
+
                         <span class="font-black text-lg sm:text-xl text-white flex items-center leading-none">
                             mo<span class="relative inline-block">v<span class="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-[#f84464] shadow-[0_0_8px_#f84464]"></span></span>ie
                         </span>
@@ -71,9 +78,10 @@
                 <!-- Desktop Navigation -->
                 <nav class="hidden lg:flex items-center gap-6">
                     <a href="index.php" class="text-sm font-medium hover:text-white transition-colors <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'text-white font-bold' : 'text-cinema-muted'; ?>">Home</a>
-                    <a href="discover.php" class="text-sm font-medium hover:text-white transition-colors <?php echo basename($_SERVER['PHP_SELF']) == 'discover.php' ? 'text-white font-bold' : 'text-cinema-muted'; ?>">Discover</a>
+                    <a href="discover.php" class="text-sm font-medium hover:text-white transition-colors <?php echo (basename($_SERVER['PHP_SELF']) == 'discover.php' && !isset($_GET['tab'])) ? 'text-white font-bold' : 'text-cinema-muted'; ?>">Discover</a>
                     <a href="watchlist.php" class="text-sm font-medium hover:text-white transition-colors <?php echo basename($_SERVER['PHP_SELF']) == 'watchlist.php' ? 'text-white font-bold' : 'text-cinema-muted'; ?>">Watchlist</a>
                     <a href="filmmakers.php" class="text-sm font-medium hover:text-white transition-colors <?php echo basename($_SERVER['PHP_SELF']) == 'filmmakers.php' ? 'text-white font-bold' : 'text-cinema-muted'; ?>">Filmmakers</a>
+                    <a href="discover.php" class="text-sm font-medium text-cinema-muted hover:text-white transition-colors">Search</a>
                     <a href="admin/index.php" class="text-sm font-medium text-cinema-muted hover:text-white transition-colors">Admin</a>
                 </nav>
             </div>

@@ -1,17 +1,61 @@
 <?php
 session_start();
 
-// Database placeholders
-function get_films() {
-    // Requirements: Remove ALL dummy/mock content.
-    // User asked to keep ONLY 2 real independent filmmakers.
-    // I will return an empty array for now since they are not in the current React project state.
-    // They can be added here easily.
-    return [];
+define('DATA_DIR', __DIR__ . '/../data/');
+if (!is_dir(DATA_DIR)) {
+    mkdir(DATA_DIR, 0777, true);
 }
 
+function get_json_data($filename) {
+    $path = DATA_DIR . $filename . '.json';
+    if (!file_exists($path)) {
+        return [];
+    }
+    $content = file_get_contents($path);
+    return json_decode($content, true) ?: [];
+}
+
+function save_json_data($filename, $data) {
+    $path = DATA_DIR . $filename . '.json';
+    file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT));
+}
+
+// Films
+function get_films($status = null) {
+    $films = get_json_data('films');
+    if ($status) {
+        return array_filter($films, function($f) use ($status) {
+            return $f['status'] === $status;
+        });
+    }
+    return $films;
+}
+
+function save_film($film) {
+    $films = get_films();
+    $found = false;
+    foreach ($films as &$f) {
+        if ($f['id'] === $film['id']) {
+            $f = $film;
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        $films[] = $film;
+    }
+    save_json_data('films', $films);
+}
+
+// Creators
 function get_creators() {
-    return [];
+    return get_json_data('creators');
+}
+
+function save_creator($creator) {
+    $creators = get_creators();
+    $creators[] = $creator;
+    save_json_data('creators', $creators);
 }
 
 function get_genres() {
